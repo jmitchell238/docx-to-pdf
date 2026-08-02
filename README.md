@@ -7,9 +7,25 @@ A simple Windows utility to convert Microsoft Word documents (.docx, .doc) to PD
 - **Windows** (Windows 10 or later)
 - **Microsoft Word** (must be installed; Home, Pro, or Microsoft 365 versions all work)
 
-## Install (Recommended)
+## Download
 
-Download or build the standalone executable. **No Python installation required** on machines that run the .exe.
+**[⬇ Download DocxToPdf.exe](https://github.com/jmitchell238/docx-to-pdf/releases/latest/download/DocxToPdf.exe)** — the latest release. Download it and run it. No installation, no Python required.
+
+Microsoft Word must still be installed, since Word is what performs the conversion (see [Requirements](#requirements) above).
+
+Optionally, right-click the downloaded `DocxToPdf.exe` and choose **Send to → Desktop (create shortcut)** to get a Desktop launcher with its own icon.
+
+**Note:** The first launch takes a second or two while the single-file executable unpacks to a temporary folder. This is normal, not a hang.
+
+All releases: [github.com/jmitchell238/docx-to-pdf/releases](https://github.com/jmitchell238/docx-to-pdf/releases)
+
+### Windows SmartScreen
+
+The download is not code-signed, so Windows may show a "Windows protected your PC" warning the first time you run it. Click **More info → Run anyway**. Signing requires a paid certificate.
+
+## Build it yourself (optional)
+
+If you would rather build from source than download:
 
 ### Option 1: Build from Source
 
