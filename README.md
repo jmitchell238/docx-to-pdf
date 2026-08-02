@@ -6,40 +6,60 @@ A simple Windows utility to convert Microsoft Word documents (.docx, .doc) to PD
 
 - **Windows** (Windows 10 or later)
 - **Microsoft Word** (must be installed; Home, Pro, or Microsoft 365 versions all work)
-- **Python 3.7+** (tested with Python 3.12.6)
-- **pywin32** package
 
-## Installation
+## Install (Recommended)
+
+Download or build the standalone executable. **No Python installation required** on machines that run the .exe.
+
+### Option 1: Build from Source
+
+1. Clone or download this repository.
+2. Install build dependencies (on your development machine):
+   ```bash
+   pip install --user pyinstaller pillow
+   ```
+   *Note:* If you see a permissions error, `pip install --user` is the correct fix for system-wide Python installations.
+
+3. Build the executable:
+   ```bash
+   cd C:\path\to\docx-to-pdf
+   build.bat
+   ```
+
+   This creates `dist\DocxToPdf.exe` (~14.9 MB), a fully standalone executable.
+
+4. (Optional) Create a Desktop shortcut:
+   - Right-click `dist\DocxToPdf.exe` → **Send to** → **Desktop (create shortcut)**
+   - Or use PowerShell (run as Administrator):
+     ```powershell
+     $WshShell = New-Object -ComObject WScript.Shell
+     $Shortcut = $WshShell.CreateShortcut([Environment]::GetFolderPath("Desktop") + "\Docx to PDF.lnk")
+     $Shortcut.TargetPath = "C:\path\to\docx-to-pdf\dist\DocxToPdf.exe"
+     $Shortcut.WorkingDirectory = "C:\path\to\docx-to-pdf"
+     $Shortcut.Save()
+     ```
+
+5. Launch by double-clicking the shortcut or `dist\DocxToPdf.exe`.
+
+   **Note:** The first launch may take a second or two as PyInstaller unpacks the application to a temporary directory. This is normal.
+
+### Option 2: Run from Source (Development)
 
 1. Clone or download this repository.
 2. Install dependencies:
    ```bash
    pip install pywin32
    ```
-3. (Optional) Create a launcher on your Desktop for quick access; see [Launcher](#launcher) below.
+3. Run the app:
+   ```bash
+   python docx_to_pdf.py
+   ```
 
 ## Usage
 
-### GUI Launch (Recommended)
+### GUI Launch
 
-**Via Desktop Shortcut:**
-
-Create a file called `Docx to PDF.bat` on your Desktop with the following contents:
-```batch
-@echo off
-cd /d C:\path\to\docx-to-pdf
-pythonw docx_to_pdf.py
-pause
-```
-
-Replace `C:\path\to\docx-to-pdf` with the actual path to your cloned repository. Double-click the `.bat` to launch.
-
-**Via Command Line:**
-
-From the repo directory:
-```bash
-python docx_to_pdf.py
-```
+Double-click the Desktop shortcut (or `dist\DocxToPdf.exe` directly). No console window will appear.
 
 ### GUI Window
 
@@ -64,6 +84,12 @@ python docx_to_pdf.py
 2. Click "Browse" next to "Save to:" and select (or confirm) the output folder.
 3. Click "Convert".
 4. Status will show "Created *filename*.pdf" in green on success, or an error message in red if something went wrong.
+
+### Desktop Shortcut Icon
+
+The application uses a custom icon (multi-resolution: 16×16 to 256×256 px) showing a document page with a blue "W", a down arrow, and a red "PDF" band:
+
+![App icon](assets/icon-preview.png)
 
 ## Use as a Library
 

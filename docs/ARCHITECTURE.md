@@ -170,6 +170,32 @@ The `convert()` function raises three exception types, each caught and displayed
 
 **How GUI handles it:** Displays in red status label.
 
+## Packaging & Distribution
+
+### Frozen Executable Layout
+
+The application is packaged with PyInstaller into a single standalone .exe (`dist\DocxToPdf.exe`). When the .exe is launched:
+
+1. PyInstaller's bootloader starts and extracts the bundled Python interpreter, standard library, and application code into a temporary directory (typically `%LOCALAPPDATA%\Temp\`).
+2. The bundled `pywin32` library is available in this temporary environment.
+3. The application runs normally: COM initialization, Word automation, etc., all work as they do in the source-code version.
+4. On exit, PyInstaller cleans up the temporary files.
+
+**First launch takes 1–2 seconds** due to unpacking; subsequent runs within the same session are faster (cached).
+
+### Why Frozen Distribution?
+
+- **No Python required:** End-users do not need to install Python, pywin32, or any dependencies.
+- **Polished user experience:** Double-click a Desktop shortcut; the .exe launches with a custom icon and no console window.
+- **Single file:** Easier to distribute, move, or delete.
+
+### Building the Executable
+
+See [build.bat](/build.bat) and [CLAUDE.md](CLAUDE.md#packaging--distribution) for details. The build process runs PyInstaller with:
+- `--onefile` — Bundle everything into a single .exe.
+- `--windowed` — Suppress the console window (essential for desktop-app aesthetics).
+- `--icon assets\icon.ico` — Custom icon (16–256 px, multi-resolution).
+
 ---
 
 ## Why This Architecture?

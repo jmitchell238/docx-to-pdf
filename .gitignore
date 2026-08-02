@@ -43,6 +43,9 @@ venv.bak/
 *.spec
 build/
 dist/
+_ftbuild/
+_ftdist/
+_ftspec/
 
 # Windows
 Thumbs.db

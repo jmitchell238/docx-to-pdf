@@ -120,9 +120,72 @@ The GUI layer catches each and displays the exception message to the user as sta
 - Clear variable names and comments on non-obvious logic.
 - No optimization premature to correctness.
 
+## Packaging & Distribution
+
+The application is packaged as a standalone Windows executable using PyInstaller.
+
+### Build Process
+
+```bash
+cd C:\path\to\docx-to-pdf
+build.bat
+```
+
+This runs PyInstaller with:
+- `--onefile` — Single executable file (no separate DLLs or data files).
+- `--windowed` — No console window. This is essential; removing it reintroduces the console, defeating the point of packaging.
+- `--name DocxToPdf` — Output executable name.
+- `--icon assets\icon.ico` — Custom icon for the executable and Desktop shortcut.
+
+**Output:** `dist\DocxToPdf.exe` (~14.9 MB, fully standalone)
+
+### Prerequisites for Building
+
+- PyInstaller 6.x or later (`pip install --user pyinstaller`)
+- Pillow (`pip install --user pillow`)
+- **Important:** PyInstaller 3.5 (or older) is too old for Python 3.12 and will fail with "ImportError: No module named 'imp'". Upgrade to 6.x.
+- If `pip install --upgrade pyinstaller` fails with a permissions error, use `pip install --user --upgrade pyinstaller` instead.
+
+### Testing a Build
+
+After building, the .exe must be tested end-to-end to verify that `pywin32` and COM automation work when frozen:
+
+1. **Verify the executable launches:**
+   ```bash
+   dist\DocxToPdf.exe
+   ```
+   Confirm the GUI window appears with no console window attached.
+
+2. **Perform a real conversion:**
+   ```python
+   # From a separate Windows CMD or PowerShell (NOT from the project directory)
+   # Create a small test script:
+   
+   import sys
+   sys.path.insert(0, r"C:\path\to\docx-to-pdf")
+   from docx_to_pdf import convert
+   
+   pdf_path = convert(r"C:\test\document.docx", r"C:\test\output")
+   print(f"PDF created: {pdf_path}")
+   ```
+   Verify:
+   - The PDF file exists and is valid (first bytes: `%PDF`).
+   - File size is reasonable (>100 KB for typical documents).
+   - No orphaned WINWORD.EXE processes remain: `tasklist /FI "IMAGENAME eq WINWORD.EXE"`
+
+   **Why:** PyInstaller's bundling of `pywin32` does not guarantee COM works when frozen. The frozen binary must be exercised with a real conversion, not just launched to inspect.
+
+### Code Changes Require Rebuilding
+
+Any change to `docx_to_pdf.py` or its dependencies requires:
+1. Re-running `build.bat` to regenerate the .exe.
+2. Re-running the end-to-end test (above) to verify COM automation still works in the frozen binary.
+3. **Do not rely on source-level tests alone.** The frozen environment is different.
+
 ## When Editing
 
 - Do not remove or weaken any of the COM rules above without explicit approval.
 - Do not add batch mode, recursive scanning, or skip-if-newer logic without being asked.
 - Do not change the exception types or their messages without considering how they appear in the GUI.
 - Do not refactor threading in a way that violates the worker-thread / main-thread separation.
+- Do not remove `--windowed` from build.bat without explicit approval; it is essential for a polished user experience.

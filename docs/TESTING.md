@@ -156,7 +156,7 @@ finally:
 ✓ Caught PermissionError: Could not write the PDF. Close it if it's open in another program and try again.
 ```
 
-### 4. Test GUI
+### 4. Test GUI (Source Code)
 
 Launch the GUI and verify basic functionality:
 
@@ -182,6 +182,91 @@ python docx_to_pdf.py
 4. Open the output PDF in your default PDF viewer and verify formatting matches the original Word document.
 
 5. Close the GUI window.
+
+### 4b. Testing a Frozen Build (dist\DocxToPdf.exe)
+
+After running `build.bat`, the frozen executable must be tested end-to-end to verify that `pywin32` and COM automation work correctly when bundled.
+
+**Verification Checklist:**
+
+#### 1. GUI Launch
+```bash
+dist\DocxToPdf.exe
+```
+
+- Verify the GUI window appears.
+- Verify **no console window** is visible (this is the purpose of `--windowed`).
+- Close the window.
+
+#### 2. End-to-End Conversion (Frozen Binary)
+
+Create a test script *outside* the project directory (to simulate an independent user):
+
+```python
+# test_frozen_build.py (in C:\temp or similar)
+
+import sys
+sys.path.insert(0, r"C:\path\to\docx-to-pdf")
+from docx_to_pdf import convert
+import os
+
+src_file = r"C:\path\to\test\document.docx"
+output_dir = r"C:\temp\_frozen_test_out"
+
+os.makedirs(output_dir, exist_ok=True)
+
+try:
+    pdf_path = convert(src_file, output_dir)
+    print(f"✓ PDF created: {pdf_path}")
+    
+    # Verify file size and signature
+    file_size = os.path.getsize(pdf_path)
+    print(f"✓ File size: {file_size} bytes")
+    
+    with open(pdf_path, "rb") as f:
+        header = f.read(4)
+        if header == b"%PDF":
+            print("✓ PDF signature valid")
+        else:
+            print("✗ Not a valid PDF")
+    
+    # Check for orphaned processes
+    import subprocess
+    result = subprocess.run(
+        ["tasklist", "/FI", "IMAGENAME eq WINWORD.EXE"],
+        capture_output=True, text=True
+    )
+    if "WINWORD.EXE" not in result.stdout:
+        print("✓ No orphaned Word processes")
+    else:
+        print("✗ Orphaned Word process found")
+        
+except Exception as e:
+    print(f"✗ Test failed: {type(e).__name__}: {e}")
+```
+
+Run it:
+```bash
+python C:\temp\test_frozen_build.py
+```
+
+**Expected output:**
+```
+✓ PDF created: C:\temp\_frozen_test_out\document.pdf
+✓ File size: 196542 bytes
+✓ PDF signature valid
+✓ No orphaned Word processes
+```
+
+**Why this is essential:**
+- Bundling `pywin32` in PyInstaller does not guarantee COM works when frozen. The temporary unpacking environment must be exercised with a real conversion.
+- A failed end-to-end test (e.g., "RuntimeError: Microsoft Word is not installed") indicates the frozen binary is broken and must not be distributed.
+- Do not rely on the GUI launching or the executable existing as proof that the build works. The conversion logic must actually run and succeed.
+
+#### 3. Verify File Integrity
+
+- PDF file size should be reasonable (typically >100 KB for a sermon or article; >200 KB for multi-page documents with images).
+- Opening the PDF in Adobe Reader or a web browser should display correctly formatted text, images, and layout matching the original Word document.
 
 ### 5. Test Complex Document
 

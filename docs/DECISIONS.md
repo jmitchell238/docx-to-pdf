@@ -150,6 +150,44 @@ Then file a bug report.
 
 ---
 
+## ADR-006: Package as a Standalone PyInstaller Executable
+
+**Context:**
+The application was initially launched from source using a .bat file (`pythonw docx_to_pdf.py`). This approach required the end-user to:
+1. Have Python 3.7+ installed.
+2. Have pywin32 installed.
+3. Use a command-line .bat launcher, which appeared unpolished and launched a brief console window.
+
+For a pastor preparing sermons and articles, a more refined, user-friendly launch method is needed: a Desktop shortcut pointing to a single .exe file.
+
+**Decision:**
+Package the application as a standalone PyInstaller executable (`--onefile --windowed --icon`).
+
+**Consequences:**
+- ✓ **No Python required on user machine:** The .exe is fully self-contained (except Word, which is still required).
+- ✓ **Polished launch:** Double-click the Desktop shortcut; no console window appears.
+- ✓ **Single file distribution:** Copy one .exe to deploy; no separate DLLs, configs, or data files.
+- ✓ **Custom icon:** The .exe and Desktop shortcut display a multi-resolution custom icon, improving visual appearance.
+- ✗ **First launch slower:** PyInstaller unpacks the frozen binary to a temporary directory on first run; first launch takes 1–2 seconds. Subsequent runs are cached within the session.
+- ✗ **Rebuild required after code changes:** Any change to source code requires re-running `build.bat` and re-testing the frozen binary (not just the source).
+- ✗ **Larger file size:** ~14.9 MB executable vs. ~50 KB source + dependencies.
+- ✗ **PyInstaller dependency:** Build machine requires PyInstaller 6.x+ (3.5 and older fail on Python 3.12 with "ImportError: No module named 'imp'").
+
+**Why PyInstaller (not cx_Freeze, py2exe, etc.)?**
+- PyInstaller is the most mature and widely-used Python-to-exe tool.
+- It handles complex dependencies (pywin32, tkinter) reliably.
+- The `--onefile --windowed` flags are well-documented and stable.
+
+**Why `--windowed` is essential:**
+- Without `--windowed`, a console window appears alongside the GUI, which looks unfinished.
+- The conversion logic is asynchronous (on a worker thread); there is no meaningful console output to show the user.
+- `--windowed` prevents the console from appearing, presenting a polished, desktop-application experience.
+
+**Testing requirement:**
+The frozen .exe must be tested end-to-end with a real .docx-to-PDF conversion, not just launched. Bundling `pywin32` does not guarantee COM automation works when frozen. The executable must be exercised to verify Word COM still functions correctly.
+
+---
+
 ## Summary Table
 
 | Decision | Choice | Key Benefit | Key Trade-off |
@@ -159,3 +197,4 @@ Then file a bug report.
 | **Scope** | Single file | Simplicity | Not suitable for batch |
 | **Code Architecture** | Importable function + GUI wrapper | Testable + reusable | Slight complexity |
 | **Resource Cleanup** | try/finally | No orphaned processes | Silent cleanup failures |
+| **Distribution** | PyInstaller --onefile --windowed | No Python needed; polished launch | Slow first start; requires rebuild after code changes |
